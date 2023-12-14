@@ -7,8 +7,10 @@ export default defineConfig({
   server: {
     watch: {
       usePolling: true
-    }
+    },
+    open: true
   },
+
   build: {
     outDir: 'docs',
   },

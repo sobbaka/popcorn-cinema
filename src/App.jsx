@@ -323,7 +323,7 @@ export default function App() {
   const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [selectedID, setSelectedID] = useState("tt0892769");
+  const [selectedID, setSelectedID] = useState("");
 
 
   function handleSelectedID(imdbID) {

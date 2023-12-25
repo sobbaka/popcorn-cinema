@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import StarRating from "./StarRating";
+import { useMovies } from "./useMovies";
 
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
@@ -186,10 +187,19 @@ function SelectedMovie({ selectedID, handleResetSelectedID, onAddwatched, watche
   const [movieDetail, setMovieDetail] = useState({})
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [rating, setRating] = useState(0)
+  const [userRating, setUserRating] = useState(0)
   const isWatched = watched.map(item => item.imdbID).includes(selectedID)
   const isWatchedRating = watched.find(item => item.imdbID === selectedID)?.userRating
   const title = movieDetail.Title
+
+
+  const countRef = useRef(0);
+  useEffect(
+    function () {
+      if (userRating) countRef.current += 1;
+    },
+    [userRating]
+  );
 
   useEffect(function () {
     function callback(e) {
@@ -244,7 +254,12 @@ function SelectedMovie({ selectedID, handleResetSelectedID, onAddwatched, watche
 
 
   function handleAddWatchedMovie() {
-    const newWatchedMovie = { ...movieDetail, runtime: parseInt(movieDetail.Runtime.replace(' min', '')), userRating: rating }
+    const newWatchedMovie = {
+      ...movieDetail,
+      runtime: parseInt(movieDetail.Runtime.replace(' min', '')),
+      userRating: userRating,
+      countRatingDecision: countRef.current,
+    }
     onAddwatched(newWatchedMovie)
     handleResetSelectedID()
   }
@@ -269,10 +284,10 @@ function SelectedMovie({ selectedID, handleResetSelectedID, onAddwatched, watche
             <StarRating
               maxStars={10}
               size={'24px'}
-              defaultRating={rating}
-              onSetRating={setRating}
+              defaultRating={userRating}
+              onSetRating={setUserRating}
             />
-            {rating > 0 && <button className="btn-add" onClick={handleAddWatchedMovie}>+ Add to list</button>}
+            {userRating > 0 && <button className="btn-add" onClick={handleAddWatchedMovie}>+ Add to list</button>}
           </>
         }
       </div>
@@ -285,16 +300,15 @@ function SelectedMovie({ selectedID, handleResetSelectedID, onAddwatched, watche
 
 export default function App() {
   const [query, setQuery] = useState("");
-  const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState(function () {
     const storedData = localStorage.getItem("watched")
     if (JSON.parse(storedData)) return JSON.parse(storedData)
     return []
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const [selectedID, setSelectedID] = useState("");
 
+
+  const [movies, isLoading, error] = useMovies(query)
 
   function handleSelectedID(imdbID) {
     setSelectedID(selectedID => (imdbID === selectedID ? null : imdbID))
@@ -315,42 +329,6 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("watched", JSON.stringify(watched));
   }, [watched])
-
-  useEffect(
-    function () {
-      const controller = new AbortController()
-
-      async function fetchMovie() {
-        try {
-          setError('')
-          setIsLoading(true)
-          const response = await fetch(`https://www.omdbapi.com/?s=${query}&apikey=b032d39e`, { signal: controller.signal })
-          if (!response.ok) throw new Error('something is broken')
-          const data = await response.json()
-          if (data.Response === 'False') throw new Error('Movie not found')
-          setMovies(data.Search)
-        } catch (err) {
-          if (err.name !== 'AbortError') {
-            console.log(err)
-            setError(err.message)
-          }
-
-        } finally {
-          setIsLoading(false)
-        }
-      }
-
-      if (!query.length) {
-        setMovies([])
-        setError('')
-        return
-      }
-      fetchMovie()
-
-      return function () {
-        controller.abort();
-      }
-    }, [query])
 
   return (
     <>

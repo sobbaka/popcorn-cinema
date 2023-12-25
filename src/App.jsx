@@ -36,9 +36,19 @@ function Results({ movies }) {
 
 function Search({ query, setQuery }) {
   const inputEl = useRef(null)
-  useEffect(() => {
-    inputEl.current.focus()
-  }, [])
+
+  useEffect(function () {
+    function callback(e) {
+      if (document.activeElement === inputEl.current) return;
+      if (e.code === 'Enter') {
+        inputEl.current.focus()
+        setQuery('')
+      }
+    }
+
+    document.addEventListener('keydown', callback)
+    return () => document.addEventListener('keydown', callback)
+  }, [setQuery])
 
   return (
     <input

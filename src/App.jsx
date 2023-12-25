@@ -306,9 +306,9 @@ export default function App() {
     return []
   });
   const [selectedID, setSelectedID] = useState("");
+  const { movies, isLoading, error } = useMovies(query)
 
 
-  const [movies, isLoading, error] = useMovies(query)
 
   function handleSelectedID(imdbID) {
     setSelectedID(selectedID => (imdbID === selectedID ? null : imdbID))
